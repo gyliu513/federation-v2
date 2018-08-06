@@ -54,7 +54,7 @@ type ClusterController struct {
 }
 
 // StartClusterController starts a new cluster controller
-func StartClusterController(config *restclient.Config, stopChan <-chan struct{}, clusterMonitorPeriod time.Duration) {
+func StartFedQueryController(config *restclient.Config, stopChan <-chan struct{}, clusterMonitorPeriod time.Duration) {
 	restclient.AddUserAgent(config, "fedrated-query-controller")
 	fedClient := fedclientset.NewForConfigOrDie(config)
 	kubeClient := kubeclientset.NewForConfigOrDie(config)
@@ -146,6 +146,6 @@ func (cc *ClusterController) updateClusterStatus() error {
 	if err != nil {
 		return err
 	}
-	glog.V(1).Infof("gyliu fedquery ClusterController observed new clusters: %#v", clusters)
+	glog.V(1).Infof("gyliu fedquery ClusterController observed new clusters: %#v.", clusters)
 	return nil
 }
