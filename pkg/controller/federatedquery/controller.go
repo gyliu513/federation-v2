@@ -142,10 +142,10 @@ func (cc *ClusterController) Run(stopChan <-chan struct{}) {
 
 // updateClusterStatus checks cluster status and get the metrics from cluster's restapi
 func (cc *ClusterController) updateClusterStatus() error {
-	clusters, err := cc.fedClient.CoreV1alpha1().FederatedClusters(util.FederationSystemNamespace).List(metav1.ListOptions{})
+	nodes, err := cc.kubeClient.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
-	glog.V(1).Infof("gyliu fedquery ClusterController observed new clusters: %#v.", clusters)
+	glog.V(1).Infof("gyliu fedquery ClusterController observed nodes: %#v.", nodes)
 	return nil
 }
