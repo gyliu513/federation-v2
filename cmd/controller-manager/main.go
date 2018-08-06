@@ -36,6 +36,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kubernetes-sigs/federation-v2/pkg/controller/federatedcluster"
+	"github.com/kubernetes-sigs/federation-v2/pkg/controller/federatedquery"
 	"github.com/kubernetes-sigs/federation-v2/pkg/controller/federatedtypeconfig"
 	"github.com/kubernetes-sigs/federation-v2/pkg/controller/ingressdns"
 	"github.com/kubernetes-sigs/federation-v2/pkg/controller/schedulingpreference"
@@ -93,6 +94,10 @@ func main() {
 	// TODO(marun) Make the monitor period configurable
 	clusterMonitorPeriod := time.Second * 40
 	federatedcluster.StartClusterController(config, fedNamespace, clusterNamespace, stopChan, clusterMonitorPeriod)
+
+	// TODO(gyliu513) Make the monitor period configurable
+	queryMonitorPeriod := time.Second * 40
+	federatedquery.StartClusterController(config, stopChan, queryMonitorPeriod)
 
 	if utilfeature.DefaultFeatureGate.Enabled(features.SchedulerPreferences) {
 		for kind, schedulingType := range schedulingtypes.SchedulingTypes() {
