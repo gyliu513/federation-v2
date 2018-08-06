@@ -81,6 +81,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().FederatedJobPlacements().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("federatednamespaceplacements"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().FederatedNamespacePlacements().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("federatedqueries"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().FederatedQueries().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("federatedreplicasets"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Core().V1alpha1().FederatedReplicaSets().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("federatedreplicasetoverrides"):

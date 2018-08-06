@@ -433,27 +433,32 @@ func (s *FederationSyncController) reconcile(qualifiedName util.QualifiedName) u
 		}
 	}
 
-	glog.V(4).Infof("Starting to reconcile %v %v", templateKind, key)
+	glog.V(4).Infof("Starting to reconcile %#v %#v", templateKind, key)
 	startTime := time.Now()
-	defer glog.V(4).Infof("Finished reconciling %v %v (duration: %v)", templateKind, key, time.Now().Sub(startTime))
+	defer glog.V(4).Infof("Finished reconciling %#v %#v (duration: %v)", templateKind, key, time.Now().Sub(startTime))
 
 	template, err := s.objFromCache(s.templateStore, templateKind, key)
 	if err != nil {
+		glog.V(4).Infof("gyliu objFromCache report error %#v kind %#v key %#v", s.templateStore, templateKind, key)
 		return util.StatusError
 	}
 	if template == nil {
+		glog.V(4).Infof("gyliu objFromCache no such template key %#v kind %#v key %#v", s.templateStore, templateKind, key)
 		return util.StatusAllOK
 	}
 
 	if template.GetDeletionTimestamp() != nil {
+		glog.V(4).Infof("gyliu tempate is deleted kind %#v key %#v", templateKind, key)
 		err := s.delete(template, templateKind, qualifiedName)
 		if err != nil {
 			msg := "Failed to delete %s %q: %v"
 			args := []interface{}{templateKind, qualifiedName, err}
 			runtime.HandleError(fmt.Errorf(msg, args...))
 			s.eventRecorder.Eventf(template, corev1.EventTypeWarning, "DeleteFailed", msg, args...)
+			glog.V(4).Infof("gyliu tempate delete error kind %#v key %#v", templateKind, key)
 			return util.StatusError
 		}
+		glog.V(4).Infof("gyliu tempate deleted succeed kind %#v key %#v", templateKind, key)
 		return util.StatusAllOK
 	}
 

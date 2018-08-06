@@ -80,6 +80,10 @@ func (c *FakeCoreV1alpha1) FederatedNamespacePlacements(namespace string) v1alph
 	return &FakeFederatedNamespacePlacements{c, namespace}
 }
 
+func (c *FakeCoreV1alpha1) FederatedQueries(namespace string) v1alpha1.FederatedQueryInterface {
+	return &FakeFederatedQueries{c, namespace}
+}
+
 func (c *FakeCoreV1alpha1) FederatedReplicaSets(namespace string) v1alpha1.FederatedReplicaSetInterface {
 	return &FakeFederatedReplicaSets{c, namespace}
 }

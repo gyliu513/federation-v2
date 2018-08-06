@@ -1,0 +1,6 @@
+apiVersion: core.federation.k8s.io/v1alpha1
+kind: FederatedQuery
+metadata:
+  name: federatedquery-example
+spec:
+  foo: bar

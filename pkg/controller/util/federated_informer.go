@@ -197,6 +197,7 @@ func NewFederatedInformer(
 						data = getClusterData(oldCluster.Name)
 					}
 					federatedInformer.deleteCluster(oldCluster)
+					glog.V(4).Infof("gyliu deleting cluster %#v to fed control plane", oldCluster)
 					if clusterLifecycle.ClusterUnavailable != nil {
 						clusterLifecycle.ClusterUnavailable(oldCluster, data)
 					}
@@ -209,6 +210,8 @@ func NewFederatedInformer(
 				} else if isClusterReady(curCluster) {
 					federatedInformer.addCluster(curCluster)
 					glog.Infof("Cluster %v/%v is ready", curCluster.Namespace, curCluster.Name)
+					glog.Infof("gyliu adding new cluster %#v to fed control plane", curCluster)
+
 					if clusterLifecycle.ClusterAvailable != nil {
 						clusterLifecycle.ClusterAvailable(curCluster)
 					}
@@ -227,6 +230,29 @@ func NewFederatedInformer(
 					glog.Errorf("Internal error: Cluster %v not updated.  New cluster not of correct type.", cur)
 					return
 				}
+				glog.V(4).Infof("gyliu old cluster %#v new cluster %#v", oldCluster, curCluster)
+				if isClusterReady(oldCluster) != isClusterReady(curCluster) {
+					glog.V(4).Infof("gyliu old cluster not same as new cluster")
+				}
+
+				if isClusterReady(oldCluster) {
+					glog.V(4).Infof("gyliu old cluster is ready")
+				}
+
+				if isClusterReady(curCluster) {
+					glog.V(4).Infof("gyliu new cluster is ready")
+				}
+
+				if !reflect.DeepEqual(oldCluster.Spec, curCluster.Spec) {
+					glog.V(4).Infof("gyliu old cluster spec not same as new cluster spec")
+				}
+
+				if !reflect.DeepEqual(oldCluster.ObjectMeta.Annotations, curCluster.ObjectMeta.Annotations) {
+					glog.V(4).Infof("gyliu old cluster annotation not same as new cluster annotation")
+				}
+
+				glog.V(4).Infof("gyliu old cluster spec %#v new cluster spec %#v", oldCluster.Spec, curCluster.Spec)
+				glog.V(4).Infof("gyliu old cluster annotation %#v new cluster annotation %#v", oldCluster.ObjectMeta.Annotations, curCluster.ObjectMeta.Annotations)
 				if isClusterReady(oldCluster) != isClusterReady(curCluster) || !reflect.DeepEqual(oldCluster.Spec, curCluster.Spec) || !reflect.DeepEqual(oldCluster.ObjectMeta.Annotations, curCluster.ObjectMeta.Annotations) {
 					var data []interface{}
 					if clusterLifecycle.ClusterUnavailable != nil {
@@ -239,6 +265,7 @@ func NewFederatedInformer(
 
 					if isClusterReady(curCluster) {
 						federatedInformer.addCluster(curCluster)
+						glog.V(4).Infof("gyliu adding updated cluster %#v to fed control plane", curCluster)
 						if clusterLifecycle.ClusterAvailable != nil {
 							clusterLifecycle.ClusterAvailable(curCluster)
 						}

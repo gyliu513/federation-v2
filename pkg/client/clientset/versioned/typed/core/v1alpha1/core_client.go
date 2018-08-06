@@ -40,6 +40,7 @@ type CoreV1alpha1Interface interface {
 	FederatedJobOverridesGetter
 	FederatedJobPlacementsGetter
 	FederatedNamespacePlacementsGetter
+	FederatedQueriesGetter
 	FederatedReplicaSetsGetter
 	FederatedReplicaSetOverridesGetter
 	FederatedReplicaSetPlacementsGetter
@@ -107,6 +108,10 @@ func (c *CoreV1alpha1Client) FederatedJobPlacements(namespace string) FederatedJ
 
 func (c *CoreV1alpha1Client) FederatedNamespacePlacements(namespace string) FederatedNamespacePlacementInterface {
 	return newFederatedNamespacePlacements(c, namespace)
+}
+
+func (c *CoreV1alpha1Client) FederatedQueries(namespace string) FederatedQueryInterface {
+	return newFederatedQueries(c, namespace)
 }
 
 func (c *CoreV1alpha1Client) FederatedReplicaSets(namespace string) FederatedReplicaSetInterface {

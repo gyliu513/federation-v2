@@ -50,6 +50,8 @@ type Interface interface {
 	FederatedJobPlacements() FederatedJobPlacementInformer
 	// FederatedNamespacePlacements returns a FederatedNamespacePlacementInformer.
 	FederatedNamespacePlacements() FederatedNamespacePlacementInformer
+	// FederatedQueries returns a FederatedQueryInformer.
+	FederatedQueries() FederatedQueryInformer
 	// FederatedReplicaSets returns a FederatedReplicaSetInformer.
 	FederatedReplicaSets() FederatedReplicaSetInformer
 	// FederatedReplicaSetOverrides returns a FederatedReplicaSetOverrideInformer.
@@ -146,6 +148,11 @@ func (v *version) FederatedJobPlacements() FederatedJobPlacementInformer {
 // FederatedNamespacePlacements returns a FederatedNamespacePlacementInformer.
 func (v *version) FederatedNamespacePlacements() FederatedNamespacePlacementInformer {
 	return &federatedNamespacePlacementInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// FederatedQueries returns a FederatedQueryInformer.
+func (v *version) FederatedQueries() FederatedQueryInformer {
+	return &federatedQueryInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // FederatedReplicaSets returns a FederatedReplicaSetInformer.

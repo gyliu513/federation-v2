@@ -122,6 +122,14 @@ type FederatedNamespacePlacementListerExpansion interface{}
 // FederatedNamespacePlacementNamespaceLister.
 type FederatedNamespacePlacementNamespaceListerExpansion interface{}
 
+// FederatedQueryListerExpansion allows custom methods to be added to
+// FederatedQueryLister.
+type FederatedQueryListerExpansion interface{}
+
+// FederatedQueryNamespaceListerExpansion allows custom methods to be added to
+// FederatedQueryNamespaceLister.
+type FederatedQueryNamespaceListerExpansion interface{}
+
 // FederatedReplicaSetListerExpansion allows custom methods to be added to
 // FederatedReplicaSetLister.
 type FederatedReplicaSetListerExpansion interface{}

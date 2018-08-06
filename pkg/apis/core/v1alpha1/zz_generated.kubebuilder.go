@@ -69,6 +69,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&FederatedJobPlacementList{},
 		&FederatedNamespacePlacement{},
 		&FederatedNamespacePlacementList{},
+		&FederatedQuery{},
+		&FederatedQueryList{},
 		&FederatedReplicaSet{},
 		&FederatedReplicaSetList{},
 		&FederatedReplicaSetOverride{},
@@ -200,6 +202,14 @@ type FederatedNamespacePlacementList struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
+type FederatedQueryList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []FederatedQuery `json:"items"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 type FederatedReplicaSetList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
@@ -303,6 +313,7 @@ var (
 			Scope: "Namespaced",
 			Validation: &v1beta1.CustomResourceValidation{
 				OpenAPIV3Schema: &v1beta1.JSONSchemaProps{
+					Type: "object",
 					Properties: map[string]v1beta1.JSONSchemaProps{
 						"apiVersion": v1beta1.JSONSchemaProps{
 							Type: "string",
@@ -965,6 +976,45 @@ var (
 		},
 	}
 	// Define CRDs for resources
+	FederatedQueryCRD = v1beta1.CustomResourceDefinition{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "federatedqueries.core.federation.k8s.io",
+		},
+		Spec: v1beta1.CustomResourceDefinitionSpec{
+			Group:   "core.federation.k8s.io",
+			Version: "v1alpha1",
+			Names: v1beta1.CustomResourceDefinitionNames{
+				Kind:   "FederatedQuery",
+				Plural: "federatedqueries",
+			},
+			Scope: "Namespaced",
+			Validation: &v1beta1.CustomResourceValidation{
+				OpenAPIV3Schema: &v1beta1.JSONSchemaProps{
+					Type: "object",
+					Properties: map[string]v1beta1.JSONSchemaProps{
+						"apiVersion": v1beta1.JSONSchemaProps{
+							Type: "string",
+						},
+						"kind": v1beta1.JSONSchemaProps{
+							Type: "string",
+						},
+						"metadata": v1beta1.JSONSchemaProps{
+							Type: "object",
+						},
+						"spec": v1beta1.JSONSchemaProps{
+							Type:       "object",
+							Properties: map[string]v1beta1.JSONSchemaProps{},
+						},
+						"status": v1beta1.JSONSchemaProps{
+							Type:       "object",
+							Properties: map[string]v1beta1.JSONSchemaProps{},
+						},
+					},
+				},
+			},
+		},
+	}
+	// Define CRDs for resources
 	FederatedReplicaSetCRD = v1beta1.CustomResourceDefinition{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "federatedreplicasets.core.federation.k8s.io",
@@ -1508,6 +1558,7 @@ var (
 			Scope: "Namespaced",
 			Validation: &v1beta1.CustomResourceValidation{
 				OpenAPIV3Schema: &v1beta1.JSONSchemaProps{
+					Type: "object",
 					Properties: map[string]v1beta1.JSONSchemaProps{
 						"apiVersion": v1beta1.JSONSchemaProps{
 							Type: "string",

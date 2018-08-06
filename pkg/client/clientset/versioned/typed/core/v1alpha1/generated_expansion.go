@@ -44,6 +44,8 @@ type FederatedJobPlacementExpansion interface{}
 
 type FederatedNamespacePlacementExpansion interface{}
 
+type FederatedQueryExpansion interface{}
+
 type FederatedReplicaSetExpansion interface{}
 
 type FederatedReplicaSetOverrideExpansion interface{}

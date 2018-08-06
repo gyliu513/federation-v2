@@ -20,6 +20,7 @@ import (
 	multiclusterdnsv1alpha1 "github.com/kubernetes-sigs/federation-v2/pkg/apis/multiclusterdns/v1alpha1"
 	schedulingv1alpha1 "github.com/kubernetes-sigs/federation-v2/pkg/apis/scheduling/v1alpha1"
 	rscheme "github.com/kubernetes-sigs/federation-v2/pkg/client/clientset/versioned/scheme"
+	"github.com/kubernetes-sigs/federation-v2/pkg/controller/federatedquery"
 	"github.com/kubernetes-sigs/federation-v2/pkg/inject/args"
 	"github.com/kubernetes-sigs/kubebuilder/pkg/inject/run"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -73,6 +74,9 @@ func init() {
 		if err := arguments.ControllerManager.AddInformerProvider(&corev1alpha1.FederatedNamespacePlacement{}, arguments.Informers.Core().V1alpha1().FederatedNamespacePlacements()); err != nil {
 			return err
 		}
+		if err := arguments.ControllerManager.AddInformerProvider(&corev1alpha1.FederatedQuery{}, arguments.Informers.Core().V1alpha1().FederatedQueries()); err != nil {
+			return err
+		}
 		if err := arguments.ControllerManager.AddInformerProvider(&corev1alpha1.FederatedReplicaSet{}, arguments.Informers.Core().V1alpha1().FederatedReplicaSets()); err != nil {
 			return err
 		}
@@ -118,6 +122,11 @@ func init() {
 
 		// Add Kubernetes informers
 
+		if c, err := federatedquery.ProvideController(arguments); err != nil {
+			return err
+		} else {
+			arguments.ControllerManager.AddController(c)
+		}
 		return nil
 	})
 
@@ -135,6 +144,7 @@ func init() {
 	Injector.CRDs = append(Injector.CRDs, &corev1alpha1.FederatedJobOverrideCRD)
 	Injector.CRDs = append(Injector.CRDs, &corev1alpha1.FederatedJobPlacementCRD)
 	Injector.CRDs = append(Injector.CRDs, &corev1alpha1.FederatedNamespacePlacementCRD)
+	Injector.CRDs = append(Injector.CRDs, &corev1alpha1.FederatedQueryCRD)
 	Injector.CRDs = append(Injector.CRDs, &corev1alpha1.FederatedReplicaSetCRD)
 	Injector.CRDs = append(Injector.CRDs, &corev1alpha1.FederatedReplicaSetOverrideCRD)
 	Injector.CRDs = append(Injector.CRDs, &corev1alpha1.FederatedReplicaSetPlacementCRD)
