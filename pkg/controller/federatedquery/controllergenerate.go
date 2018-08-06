@@ -21,6 +21,7 @@ import (
 
 	"github.com/kubernetes-sigs/kubebuilder/pkg/controller"
 	"github.com/kubernetes-sigs/kubebuilder/pkg/controller/types"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/tools/record"
 
 	corev1alpha1 "github.com/kubernetes-sigs/federation-v2/pkg/apis/core/v1alpha1"
@@ -35,14 +36,26 @@ import (
 // This files was created by "kubebuilder create resource" for you to edit.
 // Controller implementation logic for FederatedQuery resources goes here.
 
-func (bc *FederatedQueryController) Reconcile(k types.ReconcileKey) error {
+func (bc *FederatedQueryController1) Reconcile(k types.ReconcileKey) error {
 	// INSERT YOUR CODE HERE
-	glog.V(4).Infof("gyliu Implement the Reconcile function on federatedquery.FederatedQueryController to reconcile %#v\n", k.Name)
+	glog.V(4).Infof("gyliu fedquery controller Implement the Reconcile function on federatedquery.FederatedQueryController1 to reconcile %#v totl %#v\n", k.Name, k.Namespace)
+
+	typeConfigs, err := bc.federatedqueryLister.List(labels.Everything())
+	if err != nil {
+		glog.V(4).Infof("gyliu fedquery controller fed resources err %#v\n", err)
+	}
+
+	glog.V(4).Infof("gyliu fedquery controller fed resources %#v\n", typeConfigs)
+
+	for _, typeConfig := range typeConfigs {
+		glog.V(4).Infof("gyliu fedquery controller fed resources typeconfigs %#v\n", typeConfig)
+	}
+
 	return nil
 }
 
 // +kubebuilder:controller:group=core,version=v1alpha1,kind=FederatedQuery,resource=federatedqueries
-type FederatedQueryController struct {
+type FederatedQueryController1 struct {
 	// INSERT ADDITIONAL FIELDS HERE
 	federatedqueryLister corev1alpha1lister.FederatedQueryLister
 	federatedqueryclient corev1alpha1client.CoreV1alpha1Interface
@@ -55,16 +68,16 @@ type FederatedQueryController struct {
 // to automatically register this controller in the inject package
 func ProvideController(arguments args.InjectArgs) (*controller.GenericController, error) {
 	// INSERT INITIALIZATIONS FOR ADDITIONAL FIELDS HERE
-	bc := &FederatedQueryController{
+	bc := &FederatedQueryController1{
 		federatedqueryLister: arguments.ControllerManager.GetInformerProvider(&corev1alpha1.FederatedQuery{}).(corev1alpha1informer.FederatedQueryInformer).Lister(),
 
 		federatedqueryclient:   arguments.Clientset.CoreV1alpha1(),
-		federatedqueryrecorder: arguments.CreateRecorder("FederatedQueryController"),
+		federatedqueryrecorder: arguments.CreateRecorder("FederatedQueryController1"),
 	}
 
-	// Create a new controller that will call FederatedQueryController.Reconcile on changes to FederatedQuerys
+	// Create a new controller that will call FederatedQueryController1.Reconcile on changes to FederatedQuerys
 	gc := &controller.GenericController{
-		Name:             "FederatedQueryController",
+		Name:             "FederatedQueryController1",
 		Reconcile:        bc.Reconcile,
 		InformerRegistry: arguments.ControllerManager,
 	}
@@ -78,7 +91,7 @@ func ProvideController(arguments args.InjectArgs) (*controller.GenericController
 	//
 	// **********
 	// For any new Watched types, you MUST add the appropriate // +kubebuilder:informer and // +kubebuilder:rbac
-	// annotations to the FederatedQueryController and run "kubebuilder generate.
+	// annotations to the FederatedQueryController1 and run "kubebuilder generate.
 	// This will generate the code to start the informers and create the RBAC rules needed for running in a cluster.
 	// See:
 	// https://godoc.org/github.com/kubernetes-sigs/kubebuilder/pkg/gen/controller#example-package

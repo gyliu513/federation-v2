@@ -17,14 +17,17 @@ limitations under the License.
 package federatedquery
 
 import (
+	"strings"
 	"sync"
 	"time"
 
 	fedv1a1 "github.com/kubernetes-sigs/federation-v2/pkg/apis/core/v1alpha1"
 	fedclientset "github.com/kubernetes-sigs/federation-v2/pkg/client/clientset/versioned"
 	"github.com/kubernetes-sigs/federation-v2/pkg/controller/util"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	pkgruntime "k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -35,6 +38,10 @@ import (
 	crclientset "k8s.io/cluster-registry/pkg/client/clientset/versioned"
 
 	"github.com/golang/glog"
+)
+
+const (
+	Pod = "Pod"
 )
 
 type ClusterController struct {
@@ -51,6 +58,9 @@ type ClusterController struct {
 	clusterClusterStatusMap map[string]fedv1a1.FederatedClusterStatus
 
 	clusterController cache.Controller
+
+	// informer for service object from members of federation.
+	podResourceInformer util.FederatedInformer
 }
 
 // StartClusterController starts a new cluster controller
@@ -91,6 +101,22 @@ func newClusterController(fedClient fedclientset.Interface, kubeClient kubeclien
 			AddFunc:    cc.addToClusterSet,
 		},
 	)
+
+	// Federated serviceInformer for the service resource in members of federation.
+	cc.podResourceInformer = util.NewFederatedInformer(
+		fedClient,
+		kubeClient,
+		crClient,
+		&metav1.APIResource{
+			Name:       strings.ToLower(Pod) + "s",
+			Group:      corev1.SchemeGroupVersion.Group,
+			Version:    corev1.SchemeGroupVersion.Version,
+			Kind:       Pod,
+			Namespaced: true},
+		func(pkgruntime.Object) {},
+		&util.ClusterLifecycleHandlerFuncs{},
+	)
+
 	return cc
 }
 
@@ -132,6 +158,7 @@ func (cc *ClusterController) addToClusterSetWithoutLock(cluster *fedv1a1.Federat
 func (cc *ClusterController) Run(stopChan <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 	go cc.clusterController.Run(stopChan)
+	cc.podResourceInformer.Start()
 	// monitor cluster status periodically, in phase 1 we just get the health state from "/healthz"
 	go wait.Until(func() {
 		if err := cc.updateClusterStatus(); err != nil {
@@ -147,5 +174,43 @@ func (cc *ClusterController) updateClusterStatus() error {
 		return err
 	}
 	glog.V(1).Infof("gyliu fedquery ClusterController observed nodes: %#v.", nodes)
+
+	clusterNames, err := cc.clusterNames()
+
+	for _, clusterName := range clusterNames {
+
+		client, err := cc.podResourceInformer.GetClientForCluster(clusterName)
+		if err != nil {
+			glog.V(1).Infof("gyliu fedquery failed to get client for cluster %#v", clusterName)
+			return err
+		}
+		glog.V(1).Infof("gyliu fedquery Get client for cluster %#v client %#v ", clusterName, client)
+
+		unstructuredPodList, err := client.Resources("kube-system").List(metav1.ListOptions{})
+		if err != nil || unstructuredPodList == nil {
+			if err != nil {
+				glog.V(1).Infof("gyliu fedquery  get error when getting pods %#v ", err)
+			}
+			if unstructuredPodList == nil {
+				glog.V(1).Infof("gyliu fedquery get emdpty pods for cluster %#v ", clusterName)
+			}
+			return err
+		}
+		glog.V(1).Infof("gyliu fedquery ClusterController observed pods: %#v for cluster %#v.", unstructuredPodList, clusterName)
+	}
 	return nil
+}
+
+// The list of clusters could come from any target informer
+func (cc *ClusterController) clusterNames() ([]string, error) {
+	clusters, err := cc.podResourceInformer.GetReadyClusters()
+	if err != nil {
+		return nil, err
+	}
+	clusterNames := []string{}
+	for _, cluster := range clusters {
+		clusterNames = append(clusterNames, cluster.Name)
+	}
+
+	return clusterNames, nil
 }
