@@ -45,6 +45,16 @@ func (bc *FederatedQueryController1) Reconcile(k types.ReconcileKey) error {
 		glog.V(4).Infof("gyliu fedquery controller fed resources err %#v\n", err)
 	}
 
+	// namespace, name := k.Namespace, k.Name
+	// fedquery, err := bc.Informers.Samplecontroller().V1alpha1().Foos().Lister().Foos(namespace).Get(name)
+	// fedquery, err := bc.federatedqueryLister.List(labels.Everything())
+
+	// Create resource informer
+
+	// Start resource informer
+
+	//
+
 	glog.V(4).Infof("gyliu fedquery controller fed resources %#v\n", typeConfigs)
 
 	for _, typeConfig := range typeConfigs {

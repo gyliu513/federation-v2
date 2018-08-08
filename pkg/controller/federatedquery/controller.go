@@ -44,7 +44,7 @@ const (
 	Pod = "Pod"
 )
 
-type ClusterController struct {
+type FederatedQueryController struct {
 	fedClient  fedclientset.Interface
 	kubeClient kubeclientset.Interface
 	crClient   crclientset.Interface
@@ -64,20 +64,20 @@ type ClusterController struct {
 }
 
 // StartClusterController starts a new cluster controller
-func StartFedQueryController(config *restclient.Config, stopChan <-chan struct{}, clusterMonitorPeriod time.Duration) {
+func StartFederatedQueryController(config *restclient.Config, stopChan <-chan struct{}, clusterMonitorPeriod time.Duration) {
 	restclient.AddUserAgent(config, "fedrated-query-controller")
 	fedClient := fedclientset.NewForConfigOrDie(config)
 	kubeClient := kubeclientset.NewForConfigOrDie(config)
 	crClient := crclientset.NewForConfigOrDie(config)
 
-	controller := newClusterController(fedClient, kubeClient, crClient, clusterMonitorPeriod)
+	controller := newFederatedQueryController(fedClient, kubeClient, crClient, clusterMonitorPeriod)
 	glog.Infof("gyliu fedquery Starting federated query controller")
 	controller.Run(stopChan)
 }
 
 // newClusterController returns a new cluster controller
-func newClusterController(fedClient fedclientset.Interface, kubeClient kubeclientset.Interface, crClient crclientset.Interface, clusterMonitorPeriod time.Duration) *ClusterController {
-	cc := &ClusterController{
+func newFederatedQueryController(fedClient fedclientset.Interface, kubeClient kubeclientset.Interface, crClient crclientset.Interface, clusterMonitorPeriod time.Duration) *FederatedQueryController {
+	cc := &FederatedQueryController{
 		knownClusterSet:         make(sets.String),
 		fedClient:               fedClient,
 		kubeClient:              kubeClient,
@@ -121,7 +121,7 @@ func newClusterController(fedClient fedclientset.Interface, kubeClient kubeclien
 }
 
 // delFromClusterSet delete a cluster from clusterSet and
-func (cc *ClusterController) delFromClusterSet(obj interface{}) {
+func (cc *FederatedQueryController) delFromClusterSet(obj interface{}) {
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
 	cluster := obj.(*fedv1a1.FederatedCluster)
@@ -130,13 +130,13 @@ func (cc *ClusterController) delFromClusterSet(obj interface{}) {
 
 // delFromClusterSetByName delete a cluster from clusterSet by name and
 // Caller must make sure that they hold the mutex
-func (cc *ClusterController) delFromClusterSetByName(clusterName string) {
-	glog.V(1).Infof("gyliu fedquery ClusterController observed a cluster deletion: %v", clusterName)
+func (cc *FederatedQueryController) delFromClusterSetByName(clusterName string) {
+	glog.V(1).Infof("gyliu fedquery FederatedQueryController observed a cluster deletion: %v", clusterName)
 	cc.knownClusterSet.Delete(clusterName)
 	delete(cc.clusterClusterStatusMap, clusterName)
 }
 
-func (cc *ClusterController) addToClusterSet(obj interface{}) {
+func (cc *FederatedQueryController) addToClusterSet(obj interface{}) {
 	cc.mu.Lock()
 	defer cc.mu.Unlock()
 	cluster := obj.(*fedv1a1.FederatedCluster)
@@ -146,16 +146,16 @@ func (cc *ClusterController) addToClusterSet(obj interface{}) {
 // addToClusterSetWithoutLock inserts the new cluster to clusterSet and create
 // a corresponding restclient to map clusterKubeClientMap if the cluster is not
 // known. Caller must make sure that they hold the mutex.
-func (cc *ClusterController) addToClusterSetWithoutLock(cluster *fedv1a1.FederatedCluster) {
+func (cc *FederatedQueryController) addToClusterSetWithoutLock(cluster *fedv1a1.FederatedCluster) {
 	if cc.knownClusterSet.Has(cluster.Name) {
 		return
 	}
-	glog.V(1).Infof("gyliu fedquery ClusterController observed a new cluster: %v", cluster.Name)
+	glog.V(1).Infof("gyliu fedquery FederatedQueryController observed a new cluster: %v", cluster.Name)
 	cc.knownClusterSet.Insert(cluster.Name)
 }
 
 // Run begins watching and syncing.
-func (cc *ClusterController) Run(stopChan <-chan struct{}) {
+func (cc *FederatedQueryController) Run(stopChan <-chan struct{}) {
 	defer utilruntime.HandleCrash()
 	go cc.clusterController.Run(stopChan)
 	cc.podResourceInformer.Start()
@@ -168,12 +168,12 @@ func (cc *ClusterController) Run(stopChan <-chan struct{}) {
 }
 
 // updateClusterStatus checks cluster status and get the metrics from cluster's restapi
-func (cc *ClusterController) updateClusterStatus() error {
+func (cc *FederatedQueryController) updateClusterStatus() error {
 	nodes, err := cc.kubeClient.CoreV1().Nodes().List(metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
-	glog.V(1).Infof("gyliu fedquery ClusterController observed nodes: %#v.", nodes)
+	glog.V(1).Infof("gyliu fedquery FederatedQueryController observed nodes: %#v.", nodes)
 
 	clusterNames, err := cc.clusterNames()
 
@@ -196,13 +196,13 @@ func (cc *ClusterController) updateClusterStatus() error {
 			}
 			return err
 		}
-		glog.V(1).Infof("gyliu fedquery ClusterController observed pods: %#v for cluster %#v.", unstructuredPodList, clusterName)
+		glog.V(1).Infof("gyliu fedquery FederatedQueryController observed pods: %#v for cluster %#v.", unstructuredPodList, clusterName)
 	}
 	return nil
 }
 
 // The list of clusters could come from any target informer
-func (cc *ClusterController) clusterNames() ([]string, error) {
+func (cc *FederatedQueryController) clusterNames() ([]string, error) {
 	clusters, err := cc.podResourceInformer.GetReadyClusters()
 	if err != nil {
 		return nil, err
