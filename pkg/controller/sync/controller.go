@@ -135,6 +135,9 @@ func StartFederationSyncController(typeConfig typeconfig.Interface, kubeConfig *
 // newFederationSyncController returns a new sync controller for the configuration
 func newFederationSyncController(typeConfig typeconfig.Interface, kubeConfig *restclient.Config, fedNamespace, clusterNamespace, targetNamespace string) (*FederationSyncController, error) {
 	templateAPIResource := typeConfig.GetTemplate()
+	glog.Infof(fmt.Sprintf("templateAPIResource %s resources", templateAPIResource))
+	glog.Infof(fmt.Sprintf("newFederationSyncController name %s", strings.ToLower(templateAPIResource.Kind)))
+
 	userAgent := fmt.Sprintf("%s-controller", strings.ToLower(templateAPIResource.Kind))
 	// Initialize non-dynamic clients first to avoid polluting config
 	restclient.AddUserAgent(kubeConfig, userAgent)
@@ -180,6 +183,7 @@ func newFederationSyncController(typeConfig typeconfig.Interface, kubeConfig *re
 	s.templateStore, s.templateController = util.NewResourceInformer(templateClient, targetNamespace, deliverObj)
 
 	if overrideAPIResource := typeConfig.GetOverride(); overrideAPIResource != nil {
+		glog.Infof(fmt.Sprintf("overrideAPIResource %s resources", overrideAPIResource))
 		client, err := util.NewResourceClient(pool, overrideAPIResource)
 		if err != nil {
 			return nil, err
@@ -188,11 +192,13 @@ func newFederationSyncController(typeConfig typeconfig.Interface, kubeConfig *re
 	}
 
 	placementAPIResource := typeConfig.GetPlacement()
+	glog.Infof(fmt.Sprintf("placementAPIResource %s resources", placementAPIResource))
 	placementClient, err := util.NewResourceClient(pool, &placementAPIResource)
 	if err != nil {
 		return nil, err
 	}
 	targetAPIResource := typeConfig.GetTarget()
+	glog.Infof(fmt.Sprintf("targetAPIResource %s resources", targetAPIResource))
 	if targetAPIResource.Kind == util.NamespaceKind {
 		s.placementPlugin = placement.NewNamespacePlacementPlugin(placementClient, deliverObj)
 	} else {
@@ -601,12 +607,12 @@ func (s *FederationSyncController) syncToClusters(selectedClusters, unselectedCl
 	templateKind := s.typeConfig.GetTemplate().Kind
 	key := util.NewQualifiedName(template).String()
 
-	glog.V(3).Infof("Syncing %s %q in underlying clusters, selected clusters are: %s, unselected clusters are: %s",
+	glog.V(1).Infof("Syncing %s %q in underlying clusters, selected clusters are: %s, unselected clusters are: %s",
 		templateKind, key, selectedClusters, unselectedClusters)
 
 	propagatedClusterVersions := getClusterVersions(template, override, propagatedVersion)
 
-	glog.V(3).Infof("propagatedClusterVersions %s template %s override %s propagatedVersion %s",
+	glog.V(1).Infof("propagatedClusterVersions %s template %s override %s propagatedVersion %s",
 		propagatedClusterVersions, template, override, propagatedVersion)
 
 	operations, err := s.clusterOperations(selectedClusters, unselectedClusters, template,

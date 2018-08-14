@@ -115,6 +115,8 @@ func (c *FederatedTypeConfigController) Reconcile(k types.ReconcileKey) error {
 		return err
 	}
 
+	log.Printf("Get typeconfig %s for %s\n", typeConfig, k.Name)
+
 	stopChan, running := c.getStopChannel(k.Name)
 
 	deleted := typeConfig.DeletionTimestamp != nil

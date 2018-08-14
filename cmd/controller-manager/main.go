@@ -28,6 +28,7 @@ import (
 	"k8s.io/apiserver/pkg/util/logs"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
+	"github.com/golang/glog"
 	configlib "github.com/kubernetes-sigs/kubebuilder/pkg/config"
 	"github.com/kubernetes-sigs/kubebuilder/pkg/inject/run"
 	"github.com/kubernetes-sigs/kubebuilder/pkg/install"
@@ -101,7 +102,10 @@ func main() {
 
 	if utilfeature.DefaultFeatureGate.Enabled(features.SchedulerPreferences) {
 		for kind, schedulingType := range schedulingtypes.SchedulingTypes() {
+
+			glog.Infof("gyliu starting schedulingpreference controller for %s with type as %s", kind, schedulingType)
 			err = schedulingpreference.StartSchedulingPreferenceController(kind, schedulingType.SchedulerFactory, config, fedNamespace, clusterNamespace, targetNamespace, stopChan, true)
+
 			if err != nil {
 				log.Fatalf("Error starting schedulingpreference controller for %q : %v", kind, err)
 			}
