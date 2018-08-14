@@ -606,6 +606,9 @@ func (s *FederationSyncController) syncToClusters(selectedClusters, unselectedCl
 
 	propagatedClusterVersions := getClusterVersions(template, override, propagatedVersion)
 
+	glog.V(3).Infof("propagatedClusterVersions %s template %s override %s propagatedVersion %s",
+		propagatedClusterVersions, template, override, propagatedVersion)
+
 	operations, err := s.clusterOperations(selectedClusters, unselectedClusters, template,
 		override, key, propagatedClusterVersions)
 	if err != nil {
