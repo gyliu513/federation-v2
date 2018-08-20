@@ -27,8 +27,8 @@ import (
 
 // FederatedQuerySpec defines the desired state of FederatedQuery
 type FederatedQuerySpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "kubebuilder generate" to regenerate code after modifying this file
+	// Names of the clusters that a federated resource should exist in.
+	ClusterNames []string `json:"clusterNames,omitempty"`
 }
 
 // FederatedQueryStatus defines the observed state of FederatedQuery
