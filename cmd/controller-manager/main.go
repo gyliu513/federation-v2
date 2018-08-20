@@ -96,9 +96,10 @@ func main() {
 	clusterMonitorPeriod := time.Second * 40
 	federatedcluster.StartClusterController(config, fedNamespace, clusterNamespace, stopChan, clusterMonitorPeriod)
 
-	// TODO(gyliu513) Make the monitor period configurable
-	queryMonitorPeriod := time.Second * 40
-	federatedquery.StartFederatedQueryController(config, fedNamespace, stopChan, queryMonitorPeriod)
+	federatedquery.StartController(config, stopChan, false)
+	if err != nil {
+		log.Fatalf("Error starting federation query controller: %v", err)
+	}
 
 	if utilfeature.DefaultFeatureGate.Enabled(features.SchedulerPreferences) {
 		for kind, schedulingType := range schedulingtypes.SchedulingTypes() {
