@@ -98,7 +98,7 @@ func main() {
 
 	// TODO(gyliu513) Make the monitor period configurable
 	queryMonitorPeriod := time.Second * 40
-	federatedquery.StartFederatedQueryController(config, stopChan, queryMonitorPeriod)
+	federatedquery.StartFederatedQueryController(config, fedNamespace, stopChan, queryMonitorPeriod)
 
 	if utilfeature.DefaultFeatureGate.Enabled(features.SchedulerPreferences) {
 		for kind, schedulingType := range schedulingtypes.SchedulingTypes() {

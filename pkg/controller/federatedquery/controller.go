@@ -61,22 +61,26 @@ type FederatedQueryController struct {
 
 	// informer for service object from members of federation.
 	podResourceInformer util.FederatedInformer
+
+	// fedNamespace is the name of the namespace containing
+	// FederatedCluster resources and their associated secrets
+	fedNamespace string
 }
 
 // StartClusterController starts a new cluster controller
-func StartFederatedQueryController(config *restclient.Config, stopChan <-chan struct{}, clusterMonitorPeriod time.Duration) {
+func StartFederatedQueryController(config *restclient.Config, fedNamespace string, stopChan <-chan struct{}, clusterMonitorPeriod time.Duration) {
 	restclient.AddUserAgent(config, "fedrated-query-controller")
 	fedClient := fedclientset.NewForConfigOrDie(config)
 	kubeClient := kubeclientset.NewForConfigOrDie(config)
 	crClient := crclientset.NewForConfigOrDie(config)
 
-	controller := newFederatedQueryController(fedClient, kubeClient, crClient, clusterMonitorPeriod)
+	controller := newFederatedQueryController(fedClient, kubeClient, crClient, fedNamespace, clusterMonitorPeriod)
 	glog.Infof("gyliu fedquery Starting federated query controller")
 	controller.Run(stopChan)
 }
 
 // newClusterController returns a new cluster controller
-func newFederatedQueryController(fedClient fedclientset.Interface, kubeClient kubeclientset.Interface, crClient crclientset.Interface, clusterMonitorPeriod time.Duration) *FederatedQueryController {
+func newFederatedQueryController(fedClient fedclientset.Interface, kubeClient kubeclientset.Interface, crClient crclientset.Interface, fedNamespace string, clusterMonitorPeriod time.Duration) *FederatedQueryController {
 	cc := &FederatedQueryController{
 		knownClusterSet:         make(sets.String),
 		fedClient:               fedClient,
@@ -84,14 +88,15 @@ func newFederatedQueryController(fedClient fedclientset.Interface, kubeClient ku
 		crClient:                crClient,
 		clusterMonitorPeriod:    clusterMonitorPeriod,
 		clusterClusterStatusMap: make(map[string]fedv1a1.FederatedClusterStatus),
+		fedNamespace:            fedNamespace,
 	}
 	_, cc.clusterController = cache.NewInformer(
 		&cache.ListWatch{
 			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-				return cc.fedClient.CoreV1alpha1().FederatedClusters(util.FederationSystemNamespace).List(options)
+				return cc.fedClient.CoreV1alpha1().FederatedClusters(fedNamespace).List(options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-				return cc.fedClient.CoreV1alpha1().FederatedClusters(util.FederationSystemNamespace).Watch(options)
+				return cc.fedClient.CoreV1alpha1().FederatedClusters(fedNamespace).Watch(options)
 			},
 		},
 		&fedv1a1.FederatedCluster{},
@@ -107,6 +112,7 @@ func newFederatedQueryController(fedClient fedclientset.Interface, kubeClient ku
 		fedClient,
 		kubeClient,
 		crClient,
+		fedNamespace,
 		&metav1.APIResource{
 			Name:       strings.ToLower(Pod) + "s",
 			Group:      corev1.SchemeGroupVersion.Group,
