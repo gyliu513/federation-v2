@@ -101,6 +101,7 @@ func newFederatedQueryController(client fedclientset.Interface, minimizeLatency 
 					return
 				}
 				if d.needsUpdate(oldObj, curObj) {
+					glog.V(1).Infof("gyliu fedquery need update old %v cur %v", oldObj, curObj)
 					d.enqueueObject(cur)
 				}
 			},
@@ -110,10 +111,19 @@ func newFederatedQueryController(client fedclientset.Interface, minimizeLatency 
 
 	d.minRetryDelay = minRetryDelay
 	d.maxRetryDelay = maxRetryDelay
+	if minimizeLatency {
+		d.minimizeLatency()
+	}
 
 	d.queue = workqueue.NewNamedRateLimitingQueue(workqueue.NewItemExponentialFailureRateLimiter(d.minRetryDelay, d.maxRetryDelay), userAgent)
 
 	return d, nil
+}
+
+// minimizeLatency reduces delays and timeouts to make the controller more responsive (useful for testing).
+func (d *FederatedQueryController) minimizeLatency() {
+	d.minRetryDelay = 50 * time.Millisecond
+	d.maxRetryDelay = 2 * time.Second
 }
 
 func (d *FederatedQueryController) Run(stopCh <-chan struct{}, workers int) {
@@ -141,6 +151,7 @@ func (d *FederatedQueryController) Run(stopCh <-chan struct{}, workers int) {
 }
 
 func (d *FederatedQueryController) needsUpdate(oldObject, newObject *fedv1a1.FederatedQuery) bool {
+	glog.V(1).Infof("gyliu needsUpdate FederatedQueryController old spec %s new spec %s", oldObject.Spec, newObject.Spec)
 	if !reflect.DeepEqual(oldObject.Spec, newObject.Spec) {
 		return true
 	}
@@ -176,13 +187,9 @@ func (d *FederatedQueryController) processNextItem() bool {
 		return false
 	}
 
-	glog.V(1).Infof("gyliu before defer processNextItem to FederatedQueryController %s", key)
-
 	defer d.queue.Done(key)
 
-	glog.V(1).Infof("gyliu before processNextItem to FederatedQueryController %s", key)
 	err := d.processItem(key.(string))
-	glog.V(1).Infof("gyliu after processNextItem to FederatedQueryController %s", key)
 
 	if err == nil {
 		// No error, tell the queue to stop tracking history
@@ -203,7 +210,7 @@ func (d *FederatedQueryController) processNextItem() bool {
 
 func (d *FederatedQueryController) processItem(key string) error {
 	startTime := time.Now()
-	glog.V(1).Infof("gyliu Processing change to FederatedQueryController %s", key)
+	glog.V(1).Infof("gyliu Start processing change to FederatedQueryController %s", key)
 	defer func() {
 		glog.V(1).Infof("gyliu Finished processing FederatedQueryController %q (%v)", key, time.Since(startTime))
 	}()
@@ -219,7 +226,8 @@ func (d *FederatedQueryController) processItem(key string) error {
 	}
 
 	if !exists {
-		//delete corresponding DNSEndpoint object
+		//delete corresponding FederatedQuery object
+		glog.V(1).Infof("gyliu delete federated query object FederatedQueryController %q (%v)s", key)
 		return d.client.CoreV1alpha1().FederatedQueries(namespace).Delete(name, &metav1.DeleteOptions{})
 	}
 
@@ -228,17 +236,24 @@ func (d *FederatedQueryController) processItem(key string) error {
 		return fmt.Errorf("recieved event for unknown object %v", obj)
 	}
 
-	glog.V(1).Infof("gyliu queryObject %v", queryObject)
+	cachedClusters := queryObject.Spec.ClusterNames
 
-	// Get it from cache.
+	glog.V(1).Infof("gyliu fedQueryObject in cache %v cachedClusters %s", queryObject, cachedClusters)
 
 	fedQueryObject, err := d.client.CoreV1alpha1().FederatedQueries(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
-	glog.V(1).Infof("gyliu fedQueryObject %v", fedQueryObject)
+
+	curClusters := fedQueryObject.Spec.ClusterNames
+	glog.V(1).Infof("gyliu fedQueryObject %v curClusters %s", fedQueryObject, curClusters)
 
 	// Update only if the new endpoints are not equal to the existing ones.
+	if !reflect.DeepEqual(fedQueryObject.Spec.ClusterNames, cachedClusters) {
+		glog.V(1).Infof("gyliu fedQueryObject.Spec.ClusterNames %s new cachedClusters %s", fedQueryObject.Spec.ClusterNames, cachedClusters)
+		fedQueryObject.Spec.ClusterNames = cachedClusters
+		_, err = d.client.CoreV1alpha1().FederatedQueries(namespace).Update(fedQueryObject)
+	}
 
 	return err
 }
