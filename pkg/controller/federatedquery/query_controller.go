@@ -232,11 +232,11 @@ func (d *FederatedQueryController) processItem(key string) error {
 
 	// Get it from cache.
 
-	dnsEndpointObject, err := d.client.CoreV1alpha1().FederatedQueries(namespace).Get(name, metav1.GetOptions{})
+	fedQueryObject, err := d.client.CoreV1alpha1().FederatedQueries(namespace).Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
-	glog.V(1).Infof("gyliu dnsEndpointObject %v", dnsEndpointObject)
+	glog.V(1).Infof("gyliu fedQueryObject %v", fedQueryObject)
 
 	// Update only if the new endpoints are not equal to the existing ones.
 

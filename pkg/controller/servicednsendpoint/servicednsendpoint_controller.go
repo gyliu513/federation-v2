@@ -50,7 +50,7 @@ const (
 	minRetryDelay = 5 * time.Second
 	maxRetryDelay = 300 * time.Second
 	maxRetries    = 5
-	numWorkers    = 2
+	numWorkers    = 1
 
 	userAgent = "ServiceDNSEndpoint"
 
