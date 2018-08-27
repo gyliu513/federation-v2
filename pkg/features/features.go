@@ -33,6 +33,12 @@ const (
 	// PushReconciler is a propogation model where in objects are pushed to member clusters from federation.
 	PushReconciler utilfeature.Feature = "PushReconciler"
 
+	// owner: @gyliu513
+	// alpha: v0.1
+	//
+	// GenerationConfiguration is a propogation model where in objects are pushed to 3rd party repos from federation.
+	GenerationConfiguration utilfeature.Feature = "GenerationConfiguration"
+
 	// owner: @irfanurrehman
 	// alpha: v0.1
 	//
@@ -65,4 +71,5 @@ var defaultFederationFeatureGates = map[utilfeature.Feature]utilfeature.FeatureS
 	PushReconciler:               {Default: true, PreRelease: utilfeature.Alpha},
 	CrossClusterServiceDiscovery: {Default: true, PreRelease: utilfeature.Alpha},
 	FederatedIngress:             {Default: true, PreRelease: utilfeature.Alpha},
+	GenerationConfiguration:      {Default: true, PreRelease: utilfeature.Alpha},
 }

@@ -122,7 +122,7 @@ func main() {
 		}
 	}
 
-	if utilfeature.DefaultFeatureGate.Enabled(features.PushReconciler) {
+	if utilfeature.DefaultFeatureGate.Enabled(features.PushReconciler) || utilfeature.DefaultFeatureGate.Enabled(features.GenerationConfiguration) {
 		// TODO(marun) Reconsider using kubebuilder framework to start
 		// the controller.  It's not a good fit.
 		inject.Inject = append(inject.Inject, func(arguments args.InjectArgs) error {

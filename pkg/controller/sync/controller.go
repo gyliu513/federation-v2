@@ -21,6 +21,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kubernetes-sigs/federation-v2/pkg/features"
+
 	"github.com/golang/glog"
 	"github.com/kubernetes-sigs/federation-v2/pkg/apis/core/common"
 	"github.com/kubernetes-sigs/federation-v2/pkg/apis/core/typeconfig"
@@ -29,6 +31,7 @@ import (
 	"github.com/kubernetes-sigs/federation-v2/pkg/controller/sync/placement"
 	"github.com/kubernetes-sigs/federation-v2/pkg/controller/util"
 	"github.com/kubernetes-sigs/federation-v2/pkg/controller/util/deletionhelper"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +41,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
+	utilfeature "k8s.io/apiserver/pkg/util/feature"
 	"k8s.io/client-go/dynamic"
 	kubeclientset "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -509,6 +513,15 @@ func (s *FederationSyncController) reconcile(qualifiedName util.QualifiedName) u
 		propagatedVersion = propagatedVersionFromCache.(*fedv1a1.PropagatedVersion)
 	}
 
+	glog.V(1).Infof("gyliu Decision selectedClusters %s unselectedClusters %s template %s override %s propagatedVersion %s",
+		selectedClusters, unselectedClusters, template, override, propagatedVersion)
+
+	if utilfeature.DefaultFeatureGate.Enabled(features.PushReconciler) {
+		glog.V(1).Infof("gyliu using Push Reconcile")
+	}
+	if utilfeature.DefaultFeatureGate.Enabled(features.GenerationConfiguration) {
+		glog.V(1).Infof("gyliu using GenerationConfiguration")
+	}
 	return s.syncToClusters(selectedClusters, unselectedClusters, template, override, propagatedVersion)
 }
 
